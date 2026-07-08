@@ -57,7 +57,7 @@ SET search_path = viajes, public;
 
 -- Catálogo de países: origen de clientes y ubicación de destinos.
 CREATE TABLE paises (
-    pais_id      SERIAL PRIMARY KEY,
+    pais_id      INTEGER PRIMARY KEY,
     nombre       VARCHAR(80) NOT NULL,
     codigo_iso   CHAR(2) NOT NULL UNIQUE,     -- ISO 3166-1 alpha-2
     continente   VARCHAR(30) NOT NULL
@@ -65,7 +65,7 @@ CREATE TABLE paises (
 
 -- Ciudades/destinos turísticos ofrecidos por la plataforma. 1 país : N destinos.
 CREATE TABLE destinos (
-    destino_id      SERIAL PRIMARY KEY,
+    destino_id      INTEGER PRIMARY KEY,
     nombre_ciudad   VARCHAR(100) NOT NULL,
     pais_id         INTEGER NOT NULL,
     descripcion     VARCHAR(300),
@@ -77,7 +77,7 @@ CREATE TABLE destinos (
 
 -- Hoteles disponibles por destino. 1 destino : N hoteles.
 CREATE TABLE hoteles (
-    hotel_id             SERIAL PRIMARY KEY,
+    hotel_id             INTEGER PRIMARY KEY,
     destino_id           INTEGER NOT NULL,
     nombre               VARCHAR(120) NOT NULL,
     categoria_estrellas  SMALLINT NOT NULL CHECK (categoria_estrellas BETWEEN 1 AND 5),
@@ -89,7 +89,7 @@ CREATE TABLE hoteles (
 
 -- Tipos de habitación por hotel. 1 hotel : N habitaciones.
 CREATE TABLE habitaciones (
-    habitacion_id   SERIAL PRIMARY KEY,
+    habitacion_id   INTEGER PRIMARY KEY,
     hotel_id        INTEGER NOT NULL,
     tipo_habitacion VARCHAR(50) NOT NULL,
     capacidad       SMALLINT NOT NULL CHECK (capacidad BETWEEN 1 AND 10),
@@ -101,14 +101,14 @@ CREATE TABLE habitaciones (
 
 -- Catálogo de aerolíneas que operan vuelos en la plataforma.
 CREATE TABLE aerolineas (
-    aerolinea_id  SERIAL PRIMARY KEY,
+    aerolinea_id  INTEGER PRIMARY KEY,
     nombre        VARCHAR(100) NOT NULL,
     codigo_iata   CHAR(2) NOT NULL UNIQUE
 );
 
 -- Vuelos entre destinos. N:1 con aerolineas, N:1 con destinos (origen y llegada).
 CREATE TABLE vuelos (
-    vuelo_id             SERIAL PRIMARY KEY,
+    vuelo_id             INTEGER PRIMARY KEY,
     aerolinea_id         INTEGER NOT NULL,
     destino_origen_id    INTEGER NOT NULL,
     destino_llegada_id   INTEGER NOT NULL,
@@ -128,7 +128,7 @@ CREATE TABLE vuelos (
 
 -- Usuarios que reservan en la plataforma.
 CREATE TABLE clientes (
-    cliente_id      SERIAL PRIMARY KEY,
+    cliente_id      INTEGER PRIMARY KEY,
     nombre          VARCHAR(60) NOT NULL,
     apellido        VARCHAR(60) NOT NULL,
     email           VARCHAR(120) NOT NULL UNIQUE,
@@ -141,7 +141,7 @@ CREATE TABLE clientes (
 
 -- Viaje planificado por un cliente; agrupa varias reservaciones. 1 cliente : N itinerarios.
 CREATE TABLE itinerarios (
-    itinerario_id    SERIAL PRIMARY KEY,
+    itinerario_id    INTEGER PRIMARY KEY,
     cliente_id       INTEGER NOT NULL,
     nombre_viaje     VARCHAR(120) NOT NULL,
     fecha_inicio     DATE NOT NULL,
@@ -158,7 +158,7 @@ CREATE TABLE itinerarios (
 -- Resuelve la relación M:N entre clientes<->hoteles y clientes<->vuelos vía itinerarios.
 -- El CHECK final obliga exclusividad: HOTEL usa solo habitacion_id, VUELO usa solo vuelo_id.
 CREATE TABLE reservaciones (
-    reservacion_id    SERIAL PRIMARY KEY,
+    reservacion_id    INTEGER PRIMARY KEY,
     itinerario_id     INTEGER NOT NULL,
     tipo_reserva      VARCHAR(10) NOT NULL CHECK (tipo_reserva IN ('HOTEL','VUELO')),
     habitacion_id     INTEGER,
@@ -185,7 +185,7 @@ CREATE TABLE reservaciones (
 -- entidad_id es una FK polimórfica (según tipo_entidad), no se referencia con FK real.
 -- nodo_origen identifica el nodo/servidor regional que generó el registro.
 CREATE TABLE ratings (
-    rating_id      SERIAL PRIMARY KEY,
+    rating_id      INTEGER PRIMARY KEY,
     cliente_id     INTEGER NOT NULL,
     tipo_entidad   VARCHAR(10) NOT NULL CHECK (tipo_entidad IN ('HOTEL','VUELO','DESTINO')),
     entidad_id     INTEGER NOT NULL,
@@ -203,193 +203,225 @@ CREATE TABLE ratings (
 -- 3. DATOS DE EJEMPLO (DML) - casos reales, respetan FK y constraints
 -- =============================================================================
 
-INSERT INTO paises (nombre, codigo_iso, continente) VALUES
-('Costa Rica','CR','América'),('México','MX','América'),('España','ES','Europa'),
-('Estados Unidos','US','América'),('Francia','FR','Europa'),('Italia','IT','Europa'),
-('Brasil','BR','América'),('Argentina','AR','América'),('Japón','JP','Asia'),
-('Canadá','CA','América'),('Alemania','DE','Europa'),('Reino Unido','GB','Europa'),
-('Portugal','PT','Europa'),('Chile','CL','América'),('Colombia','CO','América'),
-('Perú','PE','América'),('China','CN','Asia'),('Corea del Sur','KR','Asia'),
-('Australia','AU','Oceanía'),('Países Bajos','NL','Europa');
+INSERT INTO paises (pais_id, nombre, codigo_iso, continente) VALUES
+(1,'Costa Rica','CR','América'),
+(2,'México','MX','América'),
+(3,'España','ES','Europa'),
+(4,'Estados Unidos','US','América'),
+(5,'Francia','FR','Europa'),
+(6,'Italia','IT','Europa'),
+(7,'Brasil','BR','América'),
+(8,'Argentina','AR','América'),
+(9,'Japón','JP','Asia'),
+(10,'Canadá','CA','América'),
+(11,'Alemania','DE','Europa'),
+(12,'Reino Unido','GB','Europa'),
+(13,'Portugal','PT','Europa'),
+(14,'Chile','CL','América'),
+(15,'Colombia','CO','América'),
+(16,'Perú','PE','América'),
+(17,'China','CN','Asia'),
+(18,'Corea del Sur','KR','Asia'),
+(19,'Australia','AU','Oceanía'),
+(20,'Países Bajos','NL','Europa');
 
-INSERT INTO destinos (nombre_ciudad, pais_id, descripcion, zona_horaria, popularidad) VALUES
-('San José',1,'Capital de Costa Rica, puerta a la naturaleza tropical','America/Costa_Rica',70),
-('Ciudad de México',2,'Metrópoli histórica con gastronomía y cultura milenaria','America/Mexico_City',88),
-('Barcelona',3,'Ciudad costera con arquitectura modernista','Europe/Madrid',92),
-('Madrid',3,'Capital española, arte y vida nocturna','Europe/Madrid',85),
-('Nueva York',4,'La ciudad que nunca duerme','America/New_York',97),
-('París',5,'Ciudad de la luz, romanticismo y museos','Europe/Paris',96),
-('Roma',6,'Ciudad eterna, historia y ruinas antiguas','Europe/Rome',90),
-('Río de Janeiro',7,'Playas icónicas y carnaval','America/Sao_Paulo',82),
-('Buenos Aires',8,'Tango, arquitectura europea y gastronomía','America/Argentina/Buenos_Aires',75),
-('Tokio',9,'Metrópoli futurista con tradición milenaria','Asia/Tokyo',94),
-('Berlín',11,'Historia, arte y vida nocturna en Alemania','Europe/Berlin',80),
-('Londres',12,'Capital británica, museos y teatro','Europe/London',93),
-('Lisboa',13,'Ciudad costera de calles empedradas','Europe/Lisbon',78),
-('Santiago',14,'Puerta de entrada a los Andes chilenos','America/Santiago',72),
-('Bogotá',15,'Capital colombiana en la cordillera','America/Bogota',68),
-('Lima',16,'Capital gastronómica de Sudamérica','America/Lima',71),
-('Beijing',17,'Capital histórica de China','Asia/Shanghai',84),
-('Seúl',18,'Metrópoli tecnológica y cultural','Asia/Seoul',86),
-('Sídney',19,'Puerto icónico y playas urbanas','Australia/Sydney',89),
-('Ámsterdam',20,'Canales, museos y bicicletas','Europe/Amsterdam',91);
+INSERT INTO destinos (destino_id, nombre_ciudad, pais_id, descripcion, zona_horaria, popularidad) VALUES
+(1,'San José',1,'Capital de Costa Rica, puerta a la naturaleza tropical','America/Costa_Rica',70),
+(2,'Ciudad de México',2,'Metrópoli histórica con gastronomía y cultura milenaria','America/Mexico_City',88),
+(3,'Barcelona',3,'Ciudad costera con arquitectura modernista','Europe/Madrid',92),
+(4,'Madrid',3,'Capital española, arte y vida nocturna','Europe/Madrid',85),
+(5,'Nueva York',4,'La ciudad que nunca duerme','America/New_York',97),
+(6,'París',5,'Ciudad de la luz, romanticismo y museos','Europe/Paris',96),
+(7,'Roma',6,'Ciudad eterna, historia y ruinas antiguas','Europe/Rome',90),
+(8,'Río de Janeiro',7,'Playas icónicas y carnaval','America/Sao_Paulo',82),
+(9,'Buenos Aires',8,'Tango, arquitectura europea y gastronomía','America/Argentina/Buenos_Aires',75),
+(10,'Tokio',9,'Metrópoli futurista con tradición milenaria','Asia/Tokyo',94),
+(11,'Berlín',11,'Historia, arte y vida nocturna en Alemania','Europe/Berlin',80),
+(12,'Londres',12,'Capital británica, museos y teatro','Europe/London',93),
+(13,'Lisboa',13,'Ciudad costera de calles empedradas','Europe/Lisbon',78),
+(14,'Santiago',14,'Puerta de entrada a los Andes chilenos','America/Santiago',72),
+(15,'Bogotá',15,'Capital colombiana en la cordillera','America/Bogota',68),
+(16,'Lima',16,'Capital gastronómica de Sudamérica','America/Lima',71),
+(17,'Beijing',17,'Capital histórica de China','Asia/Shanghai',84),
+(18,'Seúl',18,'Metrópoli tecnológica y cultural','Asia/Seoul',86),
+(19,'Sídney',19,'Puerto icónico y playas urbanas','Australia/Sydney',89),
+(20,'Ámsterdam',20,'Canales, museos y bicicletas','Europe/Amsterdam',91);
 
-INSERT INTO hoteles (destino_id, nombre, categoria_estrellas, direccion, precio_noche_base) VALUES
-(1,'Hotel Grano de Oro',4,'Calle 30, San José',120.00),
-(1,'Hostal Casa Verde',2,'Barrio Escalante, San José',45.00),
-(2,'Gran Hotel Ciudad de México',5,'Av. Madero 1, CDMX',210.00),
-(3,'Hotel Barceló Raval',4,'Rambla del Raval, Barcelona',160.00),
-(3,'Hostal Gótico',3,'Barrio Gótico, Barcelona',70.00),
-(4,'Hotel Villa Magna',5,'Paseo de la Castellana, Madrid',280.00),
-(5,'The Plaza Hotel',5,'5th Ave, Nueva York',450.00),
-(5,'Pod Times Square',3,'Times Square, Nueva York',150.00),
-(6,'Hotel Le Meurice',5,'Rue de Rivoli, París',500.00),
-(7,'Hotel Artemide',4,'Via Nazionale, Roma',180.00),
-(8,'Copacabana Palace',5,'Av. Atlântica, Río de Janeiro',380.00),
-(10,'Park Hyatt Tokyo',5,'Shinjuku, Tokio',400.00),
-(11,'Hotel Adlon Kempinski',5,'Unter den Linden, Berlín',380.00),
-(12,'The Savoy',5,'Strand, Londres',420.00),
-(13,'Hotel Avenida Palace',4,'Rossio, Lisboa',150.00),
-(14,'Hotel Plaza San Francisco',4,'Alameda, Santiago',130.00),
-(15,'Hotel De La Ópera',4,'La Candelaria, Bogotá',110.00),
-(16,'Belmond Miraflores Park',5,'Miraflores, Lima',260.00),
-(17,'Beijing Hotel NUO',5,'Chaoyang, Beijing',190.00),
-(18,'Lotte Hotel Seoul',5,'Jung-gu, Seúl',230.00);
+INSERT INTO hoteles (hotel_id, destino_id, nombre, categoria_estrellas, direccion, precio_noche_base) VALUES
+(1,1,'Hotel Grano de Oro',4,'Calle 30, San José',120.00),
+(2,1,'Hostal Casa Verde',2,'Barrio Escalante, San José',45.00),
+(3,2,'Gran Hotel Ciudad de México',5,'Av. Madero 1, CDMX',210.00),
+(4,3,'Hotel Barceló Raval',4,'Rambla del Raval, Barcelona',160.00),
+(5,3,'Hostal Gótico',3,'Barrio Gótico, Barcelona',70.00),
+(6,4,'Hotel Villa Magna',5,'Paseo de la Castellana, Madrid',280.00),
+(7,5,'The Plaza Hotel',5,'5th Ave, Nueva York',450.00),
+(8,5,'Pod Times Square',3,'Times Square, Nueva York',150.00),
+(9,6,'Hotel Le Meurice',5,'Rue de Rivoli, París',500.00),
+(10,7,'Hotel Artemide',4,'Via Nazionale, Roma',180.00),
+(11,8,'Copacabana Palace',5,'Av. Atlântica, Río de Janeiro',380.00),
+(12,10,'Park Hyatt Tokyo',5,'Shinjuku, Tokio',400.00),
+(13,11,'Hotel Adlon Kempinski',5,'Unter den Linden, Berlín',380.00),
+(14,12,'The Savoy',5,'Strand, Londres',420.00),
+(15,13,'Hotel Avenida Palace',4,'Rossio, Lisboa',150.00),
+(16,14,'Hotel Plaza San Francisco',4,'Alameda, Santiago',130.00),
+(17,15,'Hotel De La Ópera',4,'La Candelaria, Bogotá',110.00),
+(18,16,'Belmond Miraflores Park',5,'Miraflores, Lima',260.00),
+(19,17,'Beijing Hotel NUO',5,'Chaoyang, Beijing',190.00),
+(20,18,'Lotte Hotel Seoul',5,'Jung-gu, Seúl',230.00);
 
-INSERT INTO habitaciones (hotel_id, tipo_habitacion, capacidad, precio_noche, disponible) VALUES
-(1,'Doble Estándar',2,120.00,TRUE),(1,'Suite Junior',3,190.00,TRUE),
-(2,'Individual',1,45.00,TRUE),
-(3,'Doble Deluxe',2,210.00,TRUE),(3,'Suite Presidencial',4,520.00,FALSE),
-(4,'Doble Estándar',2,160.00,TRUE),
-(5,'Individual',1,70.00,TRUE),
-(6,'Suite Ejecutiva',2,350.00,TRUE),
-(7,'Doble Vista Central Park',2,480.00,TRUE),(7,'Suite Real',4,950.00,TRUE),
-(8,'Doble Estándar',2,150.00,TRUE),
-(9,'Suite Deluxe',2,600.00,TRUE),
-(10,'Doble Clásica',2,180.00,TRUE),
-(11,'Suite Vista al Mar',3,480.00,TRUE),
-(12,'Doble Estándar',2,400.00,TRUE),(12,'Suite Zen',2,650.00,TRUE),
-(13,'Suite Berlín',2,300.00,TRUE),
-(15,'Doble Lisboa',2,140.00,TRUE),
-(18,'Doble Lima',2,220.00,TRUE),
-(20,'Suite Seúl',2,350.00,TRUE);
+INSERT INTO habitaciones (habitacion_id, hotel_id, tipo_habitacion, capacidad, precio_noche, disponible) VALUES
+(1,1,'Doble Estándar',2,120.00,TRUE),
+(2,1,'Suite Junior',3,190.00,TRUE),
+(3,2,'Individual',1,45.00,TRUE),
+(4,3,'Doble Deluxe',2,210.00,TRUE),
+(5,3,'Suite Presidencial',4,520.00,FALSE),
+(6,4,'Doble Estándar',2,160.00,TRUE),
+(7,5,'Individual',1,70.00,TRUE),
+(8,6,'Suite Ejecutiva',2,350.00,TRUE),
+(9,7,'Doble Vista Central Park',2,480.00,TRUE),
+(10,7,'Suite Real',4,950.00,TRUE),
+(11,8,'Doble Estándar',2,150.00,TRUE),
+(12,9,'Suite Deluxe',2,600.00,TRUE),
+(13,10,'Doble Clásica',2,180.00,TRUE),
+(14,11,'Suite Vista al Mar',3,480.00,TRUE),
+(15,12,'Doble Estándar',2,400.00,TRUE),
+(16,12,'Suite Zen',2,650.00,TRUE),
+(17,13,'Suite Berlín',2,300.00,TRUE),
+(18,15,'Doble Lisboa',2,140.00,TRUE),
+(19,18,'Doble Lima',2,220.00,TRUE),
+(20,20,'Suite Seúl',2,350.00,TRUE);
 
-INSERT INTO aerolineas (nombre, codigo_iata) VALUES
-('LATAM Airlines','LA'),('Avianca','AV'),('American Airlines','AA'),('Iberia','IB'),
-('Air France','AF'),('Alitalia','AZ'),('Copa Airlines','CM'),('Japan Airlines','JL'),
-('Lufthansa','LH'),('British Airways','BA'),('TAP Air Portugal','TP'),('Qantas','QF'),
-('KLM','KL'),('Korean Air','KE'),('China Southern','CZ'),('LATAM Perú','4M'),
-('Air Canada','AC'),('Emirates','EK'),('Turkish Airlines','TK'),('Singapore Airlines','SQ');
+INSERT INTO aerolineas (aerolinea_id, nombre, codigo_iata) VALUES
+(1,'LATAM Airlines','LA'),
+(2,'Avianca','AV'),
+(3,'American Airlines','AA'),
+(4,'Iberia','IB'),
+(5,'Air France','AF'),
+(6,'Alitalia','AZ'),
+(7,'Copa Airlines','CM'),
+(8,'Japan Airlines','JL'),
+(9,'Lufthansa','LH'),
+(10,'British Airways','BA'),
+(11,'TAP Air Portugal','TP'),
+(12,'Qantas','QF'),
+(13,'KLM','KL'),
+(14,'Korean Air','KE'),
+(15,'China Southern','CZ'),
+(16,'LATAM Perú','4M'),
+(17,'Air Canada','AC'),
+(18,'Emirates','EK'),
+(19,'Turkish Airlines','TK'),
+(20,'Singapore Airlines','SQ');
 
-INSERT INTO vuelos (aerolinea_id, destino_origen_id, destino_llegada_id, fecha_salida, fecha_llegada, precio, asientos_disponibles) VALUES
-(1,1,2,'2026-08-10 06:30','2026-08-10 09:10',320.00,45),
-(2,1,4,'2026-08-12 22:00','2026-08-13 06:15',480.00,30),
-(7,1,8,'2026-09-01 14:20','2026-09-01 22:05',610.00,20),
-(3,4,5,'2026-08-15 08:00','2026-08-15 10:45',520.00,15),
-(4,4,3,'2026-08-18 11:00','2026-08-18 12:15',90.00,60),
-(5,5,6,'2026-08-20 19:30','2026-08-21 08:45',610.00,25),
-(6,6,7,'2026-08-22 07:15','2026-08-22 09:00',140.00,50),
-(1,2,9,'2026-09-05 23:50','2026-09-06 12:30',590.00,18),
-(2,2,1,'2026-09-10 07:00','2026-09-10 09:35',300.00,40),
-(8,10,5,'2026-09-14 01:20','2026-09-14 21:10',980.00,12),
-(1,8,9,'2026-09-18 03:10','2026-09-18 20:40',720.00,22),
-(4,3,4,'2026-09-20 09:45','2026-09-20 11:00',95.00,55),
-(3,5,4,'2026-09-22 20:00','2026-09-23 09:15',540.00,28),
-(6,7,6,'2026-09-25 15:30','2026-09-25 17:20',145.00,47),
-(7,9,1,'2026-09-28 06:00','2026-09-28 13:55',615.00,19),
-(9,11,6,'2026-10-02 07:00','2026-10-02 09:00',120.00,80),
-(10,12,5,'2026-10-05 10:00','2026-10-05 18:30',650.00,40),
-(13,20,12,'2026-10-08 09:00','2026-10-08 10:15',95.00,100),
-(14,18,10,'2026-10-10 14:00','2026-10-10 16:20',210.00,60),
-(12,19,9,'2026-10-12 23:00','2026-10-13 09:00',890.00,30);
+INSERT INTO vuelos (vuelo_id, aerolinea_id, destino_origen_id, destino_llegada_id, fecha_salida, fecha_llegada, precio, asientos_disponibles) VALUES
+(1,1,1,2,'2026-08-10 06:30','2026-08-10 09:10',320.00,45),
+(2,2,1,4,'2026-08-12 22:00','2026-08-13 06:15',480.00,30),
+(3,7,1,8,'2026-09-01 14:20','2026-09-01 22:05',610.00,20),
+(4,3,4,5,'2026-08-15 08:00','2026-08-15 10:45',520.00,15),
+(5,4,4,3,'2026-08-18 11:00','2026-08-18 12:15',90.00,60),
+(6,5,5,6,'2026-08-20 19:30','2026-08-21 08:45',610.00,25),
+(7,6,6,7,'2026-08-22 07:15','2026-08-22 09:00',140.00,50),
+(8,1,2,9,'2026-09-05 23:50','2026-09-06 12:30',590.00,18),
+(9,2,2,1,'2026-09-10 07:00','2026-09-10 09:35',300.00,40),
+(10,8,10,5,'2026-09-14 01:20','2026-09-14 21:10',980.00,12),
+(11,1,8,9,'2026-09-18 03:10','2026-09-18 20:40',720.00,22),
+(12,4,3,4,'2026-09-20 09:45','2026-09-20 11:00',95.00,55),
+(13,3,5,4,'2026-09-22 20:00','2026-09-23 09:15',540.00,28),
+(14,6,7,6,'2026-09-25 15:30','2026-09-25 17:20',145.00,47),
+(15,7,9,1,'2026-09-28 06:00','2026-09-28 13:55',615.00,19),
+(16,9,11,6,'2026-10-02 07:00','2026-10-02 09:00',120.00,80),
+(17,10,12,5,'2026-10-05 10:00','2026-10-05 18:30',650.00,40),
+(18,13,20,12,'2026-10-08 09:00','2026-10-08 10:15',95.00,100),
+(19,14,18,10,'2026-10-10 14:00','2026-10-10 16:20',210.00,60),
+(20,12,19,9,'2026-10-12 23:00','2026-10-13 09:00',890.00,30);
 
-INSERT INTO clientes (nombre, apellido, email, telefono, pais_id, fecha_registro) VALUES
-('Ana','Rodríguez','ana.rodriguez@correo.com','8888-1111',1,'2025-01-15'),
-('Luis','Fernández','luis.fernandez@correo.com','8888-2222',1,'2025-02-20'),
-('María','González','maria.gonzalez@correo.com','55-1234-0001',2,'2025-01-30'),
-('Carlos','Jiménez','carlos.jimenez@correo.com','55-1234-0002',2,'2025-03-05'),
-('Laura','Martínez','laura.martinez@correo.com','+34-600-111-222',3,'2025-02-10'),
-('Javier','López','javier.lopez@correo.com','+34-600-333-444',3,'2025-04-01'),
-('Emily','Johnson','emily.johnson@correo.com','+1-212-555-0101',4,'2025-01-22'),
-('Michael','Smith','michael.smith@correo.com','+1-212-555-0102',4,'2025-05-18'),
-('Sophie','Dubois','sophie.dubois@correo.com','+33-6-11-22-33',5,'2025-03-14'),
-('Marco','Rossi','marco.rossi@correo.com','+39-320-111-222',6,'2025-02-27'),
-('Beatriz','Souza','beatriz.souza@correo.com','+55-21-99999-0001',7,'2025-06-01'),
-('Diego','Fernández','diego.fernandez@correo.com','+54-11-4444-0001',8,'2025-03-30'),
-('Yuki','Tanaka','yuki.tanaka@correo.com','+81-90-1111-2222',9,'2025-04-19'),
-('Sarah','Brown','sarah.brown@correo.com','+1-416-555-0110',10,'2025-05-05'),
-('Pablo','Chaves','pablo.chaves@correo.com','8888-3333',1,'2025-06-12'),
-('Hans','Müller','hans.muller@correo.com','+49-30-1111-0001',11,'2025-07-01'),
-('Oliver','Smith','oliver.smith@correo.com','+44-20-2222-0001',12,'2025-07-05'),
-('Camila','Silva','camila.silva@correo.com','+56-2-3333-0001',14,'2025-07-10'),
-('Wei','Zhang','wei.zhang@correo.com','+86-10-4444-0001',17,'2025-07-15'),
-('Mia','Wilson','mia.wilson@correo.com','+61-2-5555-0001',19,'2025-07-20');
+INSERT INTO clientes (cliente_id, nombre, apellido, email, telefono, pais_id, fecha_registro) VALUES
+(1,'Ana','Rodríguez','ana.rodriguez@correo.com','8888-1111',1,'2025-01-15'),
+(2,'Luis','Fernández','luis.fernandez@correo.com','8888-2222',1,'2025-02-20'),
+(3,'María','González','maria.gonzalez@correo.com','55-1234-0001',2,'2025-01-30'),
+(4,'Carlos','Jiménez','carlos.jimenez@correo.com','55-1234-0002',2,'2025-03-05'),
+(5,'Laura','Martínez','laura.martinez@correo.com','+34-600-111-222',3,'2025-02-10'),
+(6,'Javier','López','javier.lopez@correo.com','+34-600-333-444',3,'2025-04-01'),
+(7,'Emily','Johnson','emily.johnson@correo.com','+1-212-555-0101',4,'2025-01-22'),
+(8,'Michael','Smith','michael.smith@correo.com','+1-212-555-0102',4,'2025-05-18'),
+(9,'Sophie','Dubois','sophie.dubois@correo.com','+33-6-11-22-33',5,'2025-03-14'),
+(10,'Marco','Rossi','marco.rossi@correo.com','+39-320-111-222',6,'2025-02-27'),
+(11,'Beatriz','Souza','beatriz.souza@correo.com','+55-21-99999-0001',7,'2025-06-01'),
+(12,'Diego','Fernández','diego.fernandez@correo.com','+54-11-4444-0001',8,'2025-03-30'),
+(13,'Yuki','Tanaka','yuki.tanaka@correo.com','+81-90-1111-2222',9,'2025-04-19'),
+(14,'Sarah','Brown','sarah.brown@correo.com','+1-416-555-0110',10,'2025-05-05'),
+(15,'Pablo','Chaves','pablo.chaves@correo.com','8888-3333',1,'2025-06-12'),
+(16,'Hans','Müller','hans.muller@correo.com','+49-30-1111-0001',11,'2025-07-01'),
+(17,'Oliver','Smith','oliver.smith@correo.com','+44-20-2222-0001',12,'2025-07-05'),
+(18,'Camila','Silva','camila.silva@correo.com','+56-2-3333-0001',14,'2025-07-10'),
+(19,'Wei','Zhang','wei.zhang@correo.com','+86-10-4444-0001',17,'2025-07-15'),
+(20,'Mia','Wilson','mia.wilson@correo.com','+61-2-5555-0001',19,'2025-07-20');
 
-INSERT INTO itinerarios (cliente_id, nombre_viaje, fecha_inicio, fecha_fin, estado, fecha_creacion) VALUES
-(1,'Escapada a México','2026-08-10','2026-08-14','CONFIRMADO','2026-06-01 10:00'),
-(2,'Vacaciones en EE.UU.','2026-08-12','2026-08-20','CONFIRMADO','2026-06-02 11:15'),
-(3,'Ruta Europea','2026-08-15','2026-08-25','PLANIFICADO','2026-06-03 09:30'),
-(4,'Negocios en Barcelona','2026-08-18','2026-08-19','CONFIRMADO','2026-06-04 14:20'),
-(5,'Luna de miel en París','2026-08-20','2026-08-27','CONFIRMADO','2026-06-05 16:00'),
-(6,'Fin de semana en Roma','2026-08-22','2026-08-24','PLANIFICADO','2026-06-06 08:45'),
-(7,'Tour por Sudamérica','2026-09-01','2026-09-08','PLANIFICADO','2026-06-10 12:00'),
-(8,'Aventura en Tokio','2026-09-05','2026-09-12','CONFIRMADO','2026-06-11 13:10'),
-(9,'Reencuentro familiar CR','2026-09-10','2026-09-14','PLANIFICADO','2026-06-12 17:40'),
-(10,'Congreso en Nueva York','2026-09-14','2026-09-16','CONFIRMADO','2026-06-13 09:05'),
-(11,'Vacaciones en Tokio','2026-09-18','2026-09-25','PLANIFICADO','2026-06-14 15:30'),
-(12,'Viaje corto a Barcelona','2026-09-20','2026-09-21','CANCELADO','2026-06-15 10:50'),
-(13,'Ruta gastronómica Roma','2026-09-25','2026-09-27','PLANIFICADO','2026-06-16 18:25'),
-(14,'Congreso en Londres','2026-10-05','2026-10-07','CONFIRMADO','2026-06-17 09:00'),
-(15,'Viaje a Berlín','2026-10-02','2026-10-06','PLANIFICADO','2026-06-18 10:30'),
-(16,'Visita a París','2026-10-02','2026-10-04','CONFIRMADO','2026-06-19 11:45'),
-(17,'Negocios en Nueva York','2026-10-05','2026-10-08','PLANIFICADO','2026-06-20 13:00'),
-(18,'Tour asiático','2026-10-10','2026-10-15','PLANIFICADO','2026-06-21 14:15'),
-(19,'Turismo en Tokio','2026-10-10','2026-10-14','CONFIRMADO','2026-06-22 15:30'),
-(20,'Vacaciones en Sudamérica','2026-10-12','2026-10-20','PLANIFICADO','2026-06-23 16:45');
+INSERT INTO itinerarios (itinerario_id, cliente_id, nombre_viaje, fecha_inicio, fecha_fin, estado, fecha_creacion) VALUES
+(1,1,'Escapada a México','2026-08-10','2026-08-14','CONFIRMADO','2026-06-01 10:00'),
+(2,2,'Vacaciones en EE.UU.','2026-08-12','2026-08-20','CONFIRMADO','2026-06-02 11:15'),
+(3,3,'Ruta Europea','2026-08-15','2026-08-25','PLANIFICADO','2026-06-03 09:30'),
+(4,4,'Negocios en Barcelona','2026-08-18','2026-08-19','CONFIRMADO','2026-06-04 14:20'),
+(5,5,'Luna de miel en París','2026-08-20','2026-08-27','CONFIRMADO','2026-06-05 16:00'),
+(6,6,'Fin de semana en Roma','2026-08-22','2026-08-24','PLANIFICADO','2026-06-06 08:45'),
+(7,7,'Tour por Sudamérica','2026-09-01','2026-09-08','PLANIFICADO','2026-06-10 12:00'),
+(8,8,'Aventura en Tokio','2026-09-05','2026-09-12','CONFIRMADO','2026-06-11 13:10'),
+(9,9,'Reencuentro familiar CR','2026-09-10','2026-09-14','PLANIFICADO','2026-06-12 17:40'),
+(10,10,'Congreso en Nueva York','2026-09-14','2026-09-16','CONFIRMADO','2026-06-13 09:05'),
+(11,11,'Vacaciones en Tokio','2026-09-18','2026-09-25','PLANIFICADO','2026-06-14 15:30'),
+(12,12,'Viaje corto a Barcelona','2026-09-20','2026-09-21','CANCELADO','2026-06-15 10:50'),
+(13,13,'Ruta gastronómica Roma','2026-09-25','2026-09-27','PLANIFICADO','2026-06-16 18:25'),
+(14,14,'Congreso en Londres','2026-10-05','2026-10-07','CONFIRMADO','2026-06-17 09:00'),
+(15,15,'Viaje a Berlín','2026-10-02','2026-10-06','PLANIFICADO','2026-06-18 10:30'),
+(16,16,'Visita a París','2026-10-02','2026-10-04','CONFIRMADO','2026-06-19 11:45'),
+(17,17,'Negocios en Nueva York','2026-10-05','2026-10-08','PLANIFICADO','2026-06-20 13:00'),
+(18,18,'Tour asiático','2026-10-10','2026-10-15','PLANIFICADO','2026-06-21 14:15'),
+(19,19,'Turismo en Tokio','2026-10-10','2026-10-14','CONFIRMADO','2026-06-22 15:30'),
+(20,20,'Vacaciones en Sudamérica','2026-10-12','2026-10-20','PLANIFICADO','2026-06-23 16:45');
 
-INSERT INTO reservaciones (itinerario_id, tipo_reserva, habitacion_id, vuelo_id, cantidad_personas, precio_total, estado_reserva, fecha_reserva) VALUES
-(1,'VUELO',NULL,1,1,320.00,'CONFIRMADA','2026-06-01 10:05'),
-(1,'HOTEL',3,NULL,1,180.00,'CONFIRMADA','2026-06-01 10:10'),
-(2,'VUELO',NULL,2,2,960.00,'CONFIRMADA','2026-06-02 11:20'),
-(2,'HOTEL',9,NULL,2,3840.00,'CONFIRMADA','2026-06-02 11:25'),
-(3,'VUELO',NULL,4,1,520.00,'PENDIENTE','2026-06-03 09:35'),
-(3,'HOTEL',6,NULL,1,1600.00,'PENDIENTE','2026-06-03 09:40'),
-(4,'HOTEL',6,NULL,1,160.00,'CONFIRMADA','2026-06-04 14:25'),
-(4,'VUELO',NULL,5,1,90.00,'CONFIRMADA','2026-06-04 14:30'),
-(5,'VUELO',NULL,6,2,1220.00,'CONFIRMADA','2026-06-05 16:05'),
-(5,'HOTEL',8,NULL,2,2450.00,'CONFIRMADA','2026-06-05 16:10'),
-(6,'VUELO',NULL,7,1,140.00,'PENDIENTE','2026-06-06 08:50'),
-(7,'VUELO',NULL,3,1,610.00,'PENDIENTE','2026-06-10 12:05'),
-(8,'VUELO',NULL,8,1,590.00,'CONFIRMADA','2026-06-11 13:15'),
-(8,'HOTEL',12,NULL,1,4200.00,'CONFIRMADA','2026-06-11 13:20'),
-(9,'VUELO',NULL,9,1,300.00,'PENDIENTE','2026-06-12 17:45'),
-(10,'VUELO',NULL,10,1,980.00,'CONFIRMADA','2026-06-13 09:10'),
-(10,'HOTEL',9,NULL,1,1000.00,'CONFIRMADA','2026-06-13 09:15'),
-(13,'HOTEL',10,NULL,2,360.00,'CANCELADA','2026-06-16 18:30'),
-(16,'VUELO',NULL,16,1,120.00,'CONFIRMADA','2026-06-19 11:50'),
-(19,'VUELO',NULL,19,1,210.00,'CONFIRMADA','2026-06-22 15:35');
+INSERT INTO reservaciones (reservacion_id, itinerario_id, tipo_reserva, habitacion_id, vuelo_id, cantidad_personas, precio_total, estado_reserva, fecha_reserva) VALUES
+(1,1,'VUELO',NULL,1,1,320.00,'CONFIRMADA','2026-06-01 10:05'),
+(2,1,'HOTEL',3,NULL,1,180.00,'CONFIRMADA','2026-06-01 10:10'),
+(3,2,'VUELO',NULL,2,2,960.00,'CONFIRMADA','2026-06-02 11:20'),
+(4,2,'HOTEL',9,NULL,2,3840.00,'CONFIRMADA','2026-06-02 11:25'),
+(5,3,'VUELO',NULL,4,1,520.00,'PENDIENTE','2026-06-03 09:35'),
+(6,3,'HOTEL',6,NULL,1,1600.00,'PENDIENTE','2026-06-03 09:40'),
+(7,4,'HOTEL',6,NULL,1,160.00,'CONFIRMADA','2026-06-04 14:25'),
+(8,4,'VUELO',NULL,5,1,90.00,'CONFIRMADA','2026-06-04 14:30'),
+(9,5,'VUELO',NULL,6,2,1220.00,'CONFIRMADA','2026-06-05 16:05'),
+(10,5,'HOTEL',8,NULL,2,2450.00,'CONFIRMADA','2026-06-05 16:10'),
+(11,6,'VUELO',NULL,7,1,140.00,'PENDIENTE','2026-06-06 08:50'),
+(12,7,'VUELO',NULL,3,1,610.00,'PENDIENTE','2026-06-10 12:05'),
+(13,8,'VUELO',NULL,8,1,590.00,'CONFIRMADA','2026-06-11 13:15'),
+(14,8,'HOTEL',12,NULL,1,4200.00,'CONFIRMADA','2026-06-11 13:20'),
+(15,9,'VUELO',NULL,9,1,300.00,'PENDIENTE','2026-06-12 17:45'),
+(16,10,'VUELO',NULL,10,1,980.00,'CONFIRMADA','2026-06-13 09:10'),
+(17,10,'HOTEL',9,NULL,1,1000.00,'CONFIRMADA','2026-06-13 09:15'),
+(18,13,'HOTEL',10,NULL,2,360.00,'CANCELADA','2026-06-16 18:30'),
+(19,16,'VUELO',NULL,16,1,120.00,'CONFIRMADA','2026-06-19 11:50'),
+(20,19,'VUELO',NULL,19,1,210.00,'CONFIRMADA','2026-06-22 15:35');
 
-INSERT INTO ratings (cliente_id, tipo_entidad, entidad_id, puntuacion, comentario, nodo_origen, verificado, fecha_rating) VALUES
-(1,'HOTEL',3,5,'Excelente ubicación y servicio impecable','NODO-AMERICA',TRUE,'2026-08-15 09:00'),
-(1,'VUELO',1,4,'Vuelo puntual, buen espacio para piernas','NODO-AMERICA',TRUE,'2026-08-11 08:30'),
-(2,'HOTEL',9,4,'Habitación amplia, wifi lento','NODO-AMERICA',TRUE,'2026-08-21 10:15'),
-(2,'VUELO',2,3,'Retraso de 40 minutos en la salida','NODO-AMERICA',FALSE,'2026-08-13 07:00'),
-(3,'DESTINO',4,5,'Madrid tiene una vida cultural increíble','NODO-EUROPA',TRUE,'2026-08-19 20:10'),
-(4,'HOTEL',6,4,'Muy elegante, precio alto pero justificado','NODO-EUROPA',TRUE,'2026-08-19 21:00'),
-(5,'VUELO',6,5,'La mejor experiencia en clase ejecutiva','NODO-EUROPA',TRUE,'2026-08-21 09:00'),
-(5,'HOTEL',8,5,'Vistas espectaculares a Central Park','NODO-AMERICA',TRUE,'2026-08-27 11:30'),
-(6,'DESTINO',7,4,'Roma es hermosa pero muy concurrida','NODO-EUROPA',FALSE,'2026-08-24 18:00'),
-(7,'VUELO',3,2,'Cancelación de último momento sin aviso','NODO-AMERICA',TRUE,'2026-09-01 15:00'),
-(8,'HOTEL',12,5,'Servicio de spa excepcional en Tokio','NODO-ASIA',TRUE,'2026-09-12 22:00'),
-(9,'DESTINO',1,4,'San José como punto de partida es cómodo','NODO-AMERICA',FALSE,'2026-09-14 12:00'),
-(10,'HOTEL',7,5,'Lujo total, vale cada centavo','NODO-AMERICA',TRUE,'2026-09-16 10:00'),
-(11,'DESTINO',10,5,'Tokio combina tradición y modernidad perfectamente','NODO-ASIA',TRUE,'2026-09-25 19:00'),
-(13,'DESTINO',7,3,'Muchas colas para entrar a los museos','NODO-EUROPA',FALSE,'2026-09-27 16:20'),
-(14,'VUELO',10,4,'Buen servicio a bordo en vuelo largo','NODO-ASIA',TRUE,'2026-09-14 08:00'),
-(16,'HOTEL',13,5,'Ubicación perfecta en el centro de Berlín','NODO-EUROPA',TRUE,'2026-10-06 12:00'),
-(17,'VUELO',17,4,'Buen servicio a bordo en el vuelo transatlántico','NODO-EUROPA',TRUE,'2026-10-08 09:00'),
-(19,'DESTINO',18,5,'Comida increíble y ciudad muy limpia','NODO-ASIA',TRUE,'2026-10-14 20:00'),
-(20,'VUELO',20,3,'Vuelo muy largo, poco entretenimiento a bordo','NODO-AMERICA',FALSE,'2026-10-13 10:00');
+INSERT INTO ratings (rating_id, cliente_id, tipo_entidad, entidad_id, puntuacion, comentario, nodo_origen, verificado, fecha_rating) VALUES
+(1,1,'HOTEL',3,5,'Excelente ubicación y servicio impecable','NODO-AMERICA',TRUE,'2026-08-15 09:00'),
+(2,1,'VUELO',1,4,'Vuelo puntual, buen espacio para piernas','NODO-AMERICA',TRUE,'2026-08-11 08:30'),
+(3,2,'HOTEL',9,4,'Habitación amplia, wifi lento','NODO-AMERICA',TRUE,'2026-08-21 10:15'),
+(4,2,'VUELO',2,3,'Retraso de 40 minutos en la salida','NODO-AMERICA',FALSE,'2026-08-13 07:00'),
+(5,3,'DESTINO',4,5,'Madrid tiene una vida cultural increíble','NODO-EUROPA',TRUE,'2026-08-19 20:10'),
+(6,4,'HOTEL',6,4,'Muy elegante, precio alto pero justificado','NODO-EUROPA',TRUE,'2026-08-19 21:00'),
+(7,5,'VUELO',6,5,'La mejor experiencia en clase ejecutiva','NODO-EUROPA',TRUE,'2026-08-21 09:00'),
+(8,5,'HOTEL',8,5,'Vistas espectaculares a Central Park','NODO-AMERICA',TRUE,'2026-08-27 11:30'),
+(9,6,'DESTINO',7,4,'Roma es hermosa pero muy concurrida','NODO-EUROPA',FALSE,'2026-08-24 18:00'),
+(10,7,'VUELO',3,2,'Cancelación de último momento sin aviso','NODO-AMERICA',TRUE,'2026-09-01 15:00'),
+(11,8,'HOTEL',12,5,'Servicio de spa excepcional en Tokio','NODO-ASIA',TRUE,'2026-09-12 22:00'),
+(12,9,'DESTINO',1,4,'San José como punto de partida es cómodo','NODO-AMERICA',FALSE,'2026-09-14 12:00'),
+(13,10,'HOTEL',7,5,'Lujo total, vale cada centavo','NODO-AMERICA',TRUE,'2026-09-16 10:00'),
+(14,11,'DESTINO',10,5,'Tokio combina tradición y modernidad perfectamente','NODO-ASIA',TRUE,'2026-09-25 19:00'),
+(15,13,'DESTINO',7,3,'Muchas colas para entrar a los museos','NODO-EUROPA',FALSE,'2026-09-27 16:20'),
+(16,14,'VUELO',10,4,'Buen servicio a bordo en vuelo largo','NODO-ASIA',TRUE,'2026-09-14 08:00'),
+(17,16,'HOTEL',13,5,'Ubicación perfecta en el centro de Berlín','NODO-EUROPA',TRUE,'2026-10-06 12:00'),
+(18,17,'VUELO',17,4,'Buen servicio a bordo en el vuelo transatlántico','NODO-EUROPA',TRUE,'2026-10-08 09:00'),
+(19,19,'DESTINO',18,5,'Comida increíble y ciudad muy limpia','NODO-ASIA',TRUE,'2026-10-14 20:00'),
+(20,20,'VUELO',20,3,'Vuelo muy largo, poco entretenimiento a bordo','NODO-AMERICA',FALSE,'2026-10-13 10:00');
 
 
 -- =============================================================================
@@ -399,24 +431,24 @@ INSERT INTO ratings (cliente_id, tipo_entidad, entidad_id, puntuacion, comentari
 -- el planificador de PostgreSQL tenga motivo real para usar los índices.
 -- =============================================================================
 
-INSERT INTO clientes (nombre, apellido, email, telefono, pais_id, fecha_registro)
-SELECT 'Cliente'||i, 'Prueba'||i, 'cliente_bulk_'||i||'@correo.com',
+INSERT INTO clientes (cliente_id, nombre, apellido, email, telefono, pais_id, fecha_registro)
+SELECT 20+i, 'Cliente'||i, 'Prueba'||i, 'cliente_bulk_'||i||'@correo.com',
        '0000-'||lpad(i::text,4,'0'), 1+floor(random()*10)::int,
        CURRENT_DATE - (floor(random()*365)::int || ' days')::interval
 FROM generate_series(1,8000) i;
 
-INSERT INTO hoteles (destino_id, nombre, categoria_estrellas, direccion, precio_noche_base)
-SELECT 1+floor(random()*10)::int, 'Hotel Bulk '||i, 1+floor(random()*5)::int,
+INSERT INTO hoteles (hotel_id, destino_id, nombre, categoria_estrellas, direccion, precio_noche_base)
+SELECT 20+i, 1+floor(random()*10)::int, 'Hotel Bulk '||i, 1+floor(random()*5)::int,
        'Dirección genérica '||i, round((50+random()*450)::numeric,2)
 FROM generate_series(1,2000) i;
 
-INSERT INTO habitaciones (hotel_id, tipo_habitacion, capacidad, precio_noche, disponible)
-SELECT 1+floor(random()*(SELECT COUNT(*) FROM hoteles))::int, 'Doble', 2,
+INSERT INTO habitaciones (habitacion_id, hotel_id, tipo_habitacion, capacidad, precio_noche, disponible)
+SELECT 20+i, 1+floor(random()*(SELECT COUNT(*) FROM hoteles))::int, 'Doble', 2,
        round((50+random()*300)::numeric,2), TRUE
 FROM generate_series(1,2000) i;
 
-INSERT INTO vuelos (aerolinea_id, destino_origen_id, destino_llegada_id, fecha_salida, fecha_llegada, precio, asientos_disponibles)
-SELECT aerolinea_id, origen, destino, salida, salida + interval '3 hours',
+INSERT INTO vuelos (vuelo_id, aerolinea_id, destino_origen_id, destino_llegada_id, fecha_salida, fecha_llegada, precio, asientos_disponibles)
+SELECT 20 + row_number() OVER (), aerolinea_id, origen, destino, salida, salida + interval '3 hours',
        round((80+random()*900)::numeric,2), floor(random()*200)::int
 FROM (
     SELECT 1+floor(random()*8)::int AS aerolinea_id,
@@ -427,8 +459,8 @@ FROM (
 ) sub
 WHERE origen <> destino;
 
-INSERT INTO itinerarios (cliente_id, nombre_viaje, fecha_inicio, fecha_fin, estado, fecha_creacion)
-SELECT 1+floor(random()*(SELECT COUNT(*) FROM clientes))::int, 'Viaje Bulk '||i,
+INSERT INTO itinerarios (itinerario_id, cliente_id, nombre_viaje, fecha_inicio, fecha_fin, estado, fecha_creacion)
+SELECT 20+i, 1+floor(random()*(SELECT COUNT(*) FROM clientes))::int, 'Viaje Bulk '||i,
        d1, d1 + (1+floor(random()*10))::int * interval '1 day',
        (ARRAY['PLANIFICADO','CONFIRMADO','EN_CURSO','COMPLETADO','CANCELADO'])[1+floor(random()*5)::int],
        CURRENT_TIMESTAMP
@@ -439,8 +471,9 @@ WITH c AS (
            (SELECT COUNT(*) FROM vuelos)       AS n_vue,
            (SELECT COUNT(*) FROM itinerarios)  AS n_itin
 )
-INSERT INTO reservaciones (itinerario_id, tipo_reserva, habitacion_id, vuelo_id, cantidad_personas, precio_total, estado_reserva, fecha_reserva)
+INSERT INTO reservaciones (reservacion_id, itinerario_id, tipo_reserva, habitacion_id, vuelo_id, cantidad_personas, precio_total, estado_reserva, fecha_reserva)
 SELECT
+    20 + row_number() OVER (),
     1+floor(random()*c.n_itin)::int,
     tipo,
     CASE WHEN tipo='HOTEL' THEN 1+floor(random()*c.n_hab)::int ELSE NULL END,
@@ -456,8 +489,9 @@ WITH c AS (
            (SELECT COUNT(*) FROM hoteles)  AS n_hot,
            (SELECT COUNT(*) FROM vuelos)   AS n_vue
 )
-INSERT INTO ratings (cliente_id, tipo_entidad, entidad_id, puntuacion, comentario, nodo_origen, verificado, fecha_rating)
+INSERT INTO ratings (rating_id, cliente_id, tipo_entidad, entidad_id, puntuacion, comentario, nodo_origen, verificado, fecha_rating)
 SELECT
+    20 + row_number() OVER (),
     1+floor(random()*c.n_cli)::int,
     tipo,
     CASE tipo WHEN 'HOTEL' THEN 1+floor(random()*c.n_hot)::int
@@ -547,12 +581,9 @@ ALTER ROLE operativo SET search_path = viajes, public;
 GRANT SELECT ON paises, destinos, hoteles, habitaciones, aerolineas, vuelos TO operativo;
 GRANT SELECT, INSERT ON clientes, itinerarios, reservaciones, ratings TO operativo;
 
-GRANT USAGE, SELECT ON
-    clientes_cliente_id_seq,
-    itinerarios_itinerario_id_seq,
-    reservaciones_reservacion_id_seq,
-    ratings_rating_id_seq
-TO operativo;
+-- Nota: las llaves primarias son INTEGER simples (sin autoincremento), por lo que
+-- las aplicaciones del rol operativo asignan el valor del id explícitamente en cada
+-- INSERT. Al no existir secuencias, no se requiere GRANT sobre secuencias.
 
 -- Refuerzo explícito: operativo nunca altera el catálogo ni borra registros
 REVOKE INSERT, UPDATE, DELETE, TRUNCATE ON paises, destinos, hoteles, habitaciones, aerolineas, vuelos FROM operativo;
