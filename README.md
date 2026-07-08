@@ -51,4 +51,4 @@ significativa (validado en pruebas: entre 32% y 98% según la consulta).
   itinerarios, reservaciones y ratings. No puede modificar el catálogo ni
   borrar registros.
 
-Probado en PostgreSQL 16.
+Probado en PostgreSQL 16
