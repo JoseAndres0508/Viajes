@@ -3,26 +3,48 @@
 -- TEMA: PLATAFORMA DE VIAJES GLOBAL
 -- Destinos, Hoteles, Vuelos, Reservaciones, Itinerarios, Rating Distribuido
 -- Motor: PostgreSQL 16 | Script único, ejecutable de una sola vez sin errores
--- Orden: limpieza -> DDL -> datos -> EXPLAIN ANALYZE (antes) -> índices ->
---        EXPLAIN ANALYZE (después) -> seguridad -> consultas de ejemplo
+-- Todos los objetos viven en el schema dedicado "viajes" (no se usa "public").
+-- Orden: limpieza -> schema -> DDL -> datos -> EXPLAIN ANALYZE (antes) ->
+--        índices -> EXPLAIN ANALYZE (después) -> seguridad -> consultas de ejemplo
 -- =============================================================================
 
 
 -- =============================================================================
 -- 1. LIMPIEZA PREVIA (permite re-ejecutar el script sin errores)
+-- Se elimina el schema completo en cascada: borra tablas, índices, secuencias
+-- y los permisos otorgados sobre esos objetos en una sola sentencia.
 -- =============================================================================
-DROP TABLE IF EXISTS ratings CASCADE;
-DROP TABLE IF EXISTS reservaciones CASCADE;
-DROP TABLE IF EXISTS itinerarios CASCADE;
-DROP TABLE IF EXISTS vuelos CASCADE;
-DROP TABLE IF EXISTS aerolineas CASCADE;
-DROP TABLE IF EXISTS habitaciones CASCADE;
-DROP TABLE IF EXISTS hoteles CASCADE;
-DROP TABLE IF EXISTS clientes CASCADE;
-DROP TABLE IF EXISTS destinos CASCADE;
-DROP TABLE IF EXISTS paises CASCADE;
-DROP ROLE IF EXISTS operativo;
-DROP ROLE IF EXISTS administrador;
+-- Los roles son GLOBALES al cluster: antes de eliminarlos hay que revocar
+-- los permisos que tengan en esta base de datos (DROP OWNED BY), de lo
+-- contrario DROP ROLE falla con "cannot be dropped because some objects depend on it".
+DO $$
+BEGIN
+    IF EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'operativo') THEN
+        DROP OWNED BY operativo;       -- revoca todos sus permisos en esta BD
+        DROP ROLE operativo;
+    END IF;
+    IF EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'administrador') THEN
+        DROP OWNED BY administrador;
+        DROP ROLE administrador;
+    END IF;
+END $$;
+
+DROP SCHEMA IF EXISTS viajes CASCADE;
+
+
+-- =============================================================================
+-- 1.1 SCHEMA DEDICADO
+-- Por política del proyecto NO se usa el schema "public" por defecto:
+-- un schema propio aísla los objetos de la aplicación, evita colisiones de
+-- nombres con extensiones/otros proyectos y permite administrar permisos a
+-- nivel de schema (GRANT USAGE) en lugar de depender del acceso abierto que
+-- "public" otorga por defecto.
+-- =============================================================================
+CREATE SCHEMA viajes;
+
+-- Todas las sentencias siguientes (DDL, DML, índices, consultas) se resuelven
+-- dentro del schema "viajes" gracias al search_path de esta sesión.
+SET search_path TO viajes;
 
 
 -- =============================================================================
@@ -498,17 +520,26 @@ EXPLAIN ANALYZE SELECT * FROM itinerarios WHERE cliente_id = 5;
 
 -- ADMINISTRADOR: acceso completo (DDL + DML) para operación y soporte de la plataforma
 CREATE ROLE administrador WITH LOGIN PASSWORD 'Admin_ViajesGlobal_2026!';
-GRANT ALL PRIVILEGES ON SCHEMA public TO administrador;
-GRANT ALL PRIVILEGES ON ALL TABLES IN SCHEMA public TO administrador;
-GRANT ALL PRIVILEGES ON ALL SEQUENCES IN SCHEMA public TO administrador;
-ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT ALL PRIVILEGES ON TABLES TO administrador;
-ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT ALL PRIVILEGES ON SEQUENCES TO administrador;
--- GRANT ALL PRIVILEGES ON SCHEMA otorga CREATE, permitiendo CREATE/ALTER/DROP además de INSERT/UPDATE/DELETE.
+GRANT ALL PRIVILEGES ON SCHEMA viajes TO administrador;
+GRANT ALL PRIVILEGES ON ALL TABLES IN SCHEMA viajes TO administrador;
+GRANT ALL PRIVILEGES ON ALL SEQUENCES IN SCHEMA viajes TO administrador;
+ALTER DEFAULT PRIVILEGES IN SCHEMA viajes GRANT ALL PRIVILEGES ON TABLES TO administrador;
+ALTER DEFAULT PRIVILEGES IN SCHEMA viajes GRANT ALL PRIVILEGES ON SEQUENCES TO administrador;
+-- GRANT ALL PRIVILEGES ON SCHEMA otorga USAGE y CREATE, permitiendo CREATE/ALTER/DROP
+-- además de INSERT/UPDATE/DELETE sobre los objetos del schema.
+
+-- Al iniciar sesión, el rol trabajará directamente dentro del schema "viajes"
+ALTER ROLE administrador SET search_path = viajes;
 
 -- OPERATIVO: personal de atención al cliente. Consulta el catálogo y registra
 -- clientes/itinerarios/reservaciones/ratings, pero no modifica el catálogo maestro
 -- ni borra información.
 CREATE ROLE operativo WITH LOGIN PASSWORD 'Operativo_ViajesGlobal_2026!';
+
+-- USAGE es requisito para poder "entrar" al schema y resolver sus objetos.
+-- (Sin USAGE, ningún GRANT sobre tablas individuales sirve de nada.)
+GRANT USAGE ON SCHEMA viajes TO operativo;
+ALTER ROLE operativo SET search_path = viajes;
 
 GRANT SELECT ON paises, destinos, hoteles, habitaciones, aerolineas, vuelos TO operativo;
 GRANT SELECT, INSERT ON clientes, itinerarios, reservaciones, ratings TO operativo;
