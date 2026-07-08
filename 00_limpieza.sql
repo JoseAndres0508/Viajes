@@ -12,3 +12,4 @@ DROP TABLE IF EXISTS paises CASCADE;
 
 DROP ROLE IF EXISTS operativo;
 DROP ROLE IF EXISTS administrador;
+------------
