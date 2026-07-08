@@ -1,0 +1,14 @@
+-- Limpieza previa: permite re-ejecutar el proyecto sin errores
+DROP TABLE IF EXISTS ratings CASCADE;
+DROP TABLE IF EXISTS reservaciones CASCADE;
+DROP TABLE IF EXISTS itinerarios CASCADE;
+DROP TABLE IF EXISTS vuelos CASCADE;
+DROP TABLE IF EXISTS aerolineas CASCADE;
+DROP TABLE IF EXISTS habitaciones CASCADE;
+DROP TABLE IF EXISTS hoteles CASCADE;
+DROP TABLE IF EXISTS clientes CASCADE;
+DROP TABLE IF EXISTS destinos CASCADE;
+DROP TABLE IF EXISTS paises CASCADE;
+
+DROP ROLE IF EXISTS operativo;
+DROP ROLE IF EXISTS administrador;
