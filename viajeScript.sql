@@ -3,7 +3,7 @@
 -- TEMA: PLATAFORMA DE VIAJES GLOBAL
 -- Destinos, Hoteles, Vuelos, Reservaciones, Itinerarios, Rating Distribuido
 -- Motor: PostgreSQL 16 | Script único, ejecutable de una sola vez sin errores
--- Todos los objetos viven en el schema dedicado "viajes" (no se usa "public").
+-- Los objetos del proyecto viven en el schema dedicado "viajes" (no en "public").
 -- Orden: limpieza -> schema -> DDL -> datos -> EXPLAIN ANALYZE (antes) ->
 --        índices -> EXPLAIN ANALYZE (después) -> seguridad -> consultas de ejemplo
 -- =============================================================================
@@ -34,17 +34,20 @@ DROP SCHEMA IF EXISTS viajes CASCADE;
 
 -- =============================================================================
 -- 1.1 SCHEMA DEDICADO
--- Por política del proyecto NO se usa el schema "public" por defecto:
+-- Por política del proyecto NO se guardan los objetos en el schema "public":
 -- un schema propio aísla los objetos de la aplicación, evita colisiones de
 -- nombres con extensiones/otros proyectos y permite administrar permisos a
 -- nivel de schema (GRANT USAGE) en lugar de depender del acceso abierto que
--- "public" otorga por defecto.
+-- "public" otorga por defecto. "public" queda únicamente como respaldo del
+-- search_path para resolver extensiones y funciones instaladas fuera de "viajes".
 -- =============================================================================
 CREATE SCHEMA viajes;
 
--- Todas las sentencias siguientes (DDL, DML, índices, consultas) se resuelven
--- dentro del schema "viajes" gracias al search_path de esta sesión.
-SET search_path TO viajes;
+-- Todas las sentencias siguientes (DDL, DML, índices, consultas) se crean y
+-- resuelven dentro del schema "viajes", que va primero en el search_path.
+-- Se deja "public" como segundo destino solo de respaldo (extensiones y
+-- funciones instaladas ahí); ningún objeto del proyecto se guarda en public.
+SET search_path = viajes, public;
 
 
 -- =============================================================================
@@ -529,7 +532,7 @@ ALTER DEFAULT PRIVILEGES IN SCHEMA viajes GRANT ALL PRIVILEGES ON SEQUENCES TO a
 -- además de INSERT/UPDATE/DELETE sobre los objetos del schema.
 
 -- Al iniciar sesión, el rol trabajará directamente dentro del schema "viajes"
-ALTER ROLE administrador SET search_path = viajes;
+ALTER ROLE administrador SET search_path = viajes, public;
 
 -- OPERATIVO: personal de atención al cliente. Consulta el catálogo y registra
 -- clientes/itinerarios/reservaciones/ratings, pero no modifica el catálogo maestro
@@ -539,7 +542,7 @@ CREATE ROLE operativo WITH LOGIN PASSWORD 'Operativo_ViajesGlobal_2026!';
 -- USAGE es requisito para poder "entrar" al schema y resolver sus objetos.
 -- (Sin USAGE, ningún GRANT sobre tablas individuales sirve de nada.)
 GRANT USAGE ON SCHEMA viajes TO operativo;
-ALTER ROLE operativo SET search_path = viajes;
+ALTER ROLE operativo SET search_path = viajes, public;
 
 GRANT SELECT ON paises, destinos, hoteles, habitaciones, aerolineas, vuelos TO operativo;
 GRANT SELECT, INSERT ON clientes, itinerarios, reservaciones, ratings TO operativo;
