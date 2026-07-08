@@ -5,7 +5,7 @@ vuelos, reservaciones, itinerarios y un sistema de rating distribuido.
 
 ## Archivo
 
-`proyecto_plataforma_viajes_global.sql` — script único, ejecutable de una
+`viajScript.sql` — script único, ejecutable de una
 sola vez sin errores. Incluye, en orden:
 
 1. Limpieza previa (DROP)
@@ -34,7 +34,7 @@ simula el nodo regional que generó el registro en un sistema distribuido)
 
 ```bash
 createdb viajes_global
-psql -d viajes_global -f proyecto_plataforma_viajes_global.sql
+psql -d viajes_global -f viajScript.sql
 ```
 
 Para ver la comparación de rendimiento, revisa la salida de las secciones 5
